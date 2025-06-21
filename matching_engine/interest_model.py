@@ -7,6 +7,10 @@ from sklearn.linear_model import SGDClassifier
 import joblib
 import os
 
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 # 加载/初始化兴趣模型
 MODEL_PATH = "interest_model.pkl"
 CLASSES = [0, 1]  # 0: 不相关，1: 相关
@@ -37,7 +41,7 @@ X, y = np.array(X), np.array(y)
 # 如果已有模型，就加载继续训练；否则新建
 if os.path.exists(MODEL_PATH):
     clf = joblib.load(MODEL_PATH)
-    print("🔄 已加载旧模型，准备增量训练")
+    print("The old model has been loaded, ready for incremental training.")
 else:
     clf = SGDClassifier(loss="log_loss", max_iter=1000)
     clf.partial_fit(X[:1], y[:1], classes=CLASSES)  # 初始化类别
@@ -47,7 +51,30 @@ clf.partial_fit(X, y)
 
 # 保存
 joblib.dump(clf, MODEL_PATH)
-print("✅ 增量训练完成，模型已保存至 interest_model.pkl")
+print("Incremental training is complete, the model has been saved to interest_model.pkl.")
+
+# 模型评估（只对训练集）
+y_pred = clf.predict(X)
+
+acc = accuracy_score(y, y_pred)
+prec = precision_score(y, y_pred)
+rec = recall_score(y, y_pred)
+f1 = f1_score(y, y_pred)
+
+print("\nThe result of the model evaluation is：")
+print(f"Accuracy: {acc:.4f}")
+print(f"Precision: {prec:.4f}")
+print(f"Recall: {rec:.4f}")
+print(f"F1 Score: {f1:.4f}")
+
+# 可视化混淆矩阵
+cm = confusion_matrix(y, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
 
 
 

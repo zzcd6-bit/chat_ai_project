@@ -4,9 +4,9 @@ import numpy as np
 # === 向量模型 + 小模型：只加载一次 ===
 from sentence_transformers import SentenceTransformer
 import joblib
+import os
 
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-import os
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "interest_model.pkl")
 interest_clf = joblib.load(MODEL_PATH)
 
