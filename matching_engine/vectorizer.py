@@ -5,6 +5,8 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import joblib
 import os
+from matching_engine.personality_match import match_personality
+from math import fabs
 
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "interest_model.pkl")
@@ -18,7 +20,7 @@ def get_embedding(text):
         embedding_cache[text] = embedding_model.encode(text)
     return embedding_cache[text]
 
-#性格匹配
+#兴趣匹配
 def match_interest_set(set1, set2):
     matched = 0
     total = max(1, len(set(set1) | set(set2)))
@@ -32,9 +34,6 @@ def match_interest_set(set1, set2):
                 matched += 1
                 break
     return matched / total
-
-def jaccard(set1, set2):
-    return len(set1 & set2) / max(1, len(set1 | set2))
 
 def build_feature_vector(user, candidate):
     # 数值型匹配：互相是否落在对方的理想范围内
@@ -56,15 +55,7 @@ def build_feature_vector(user, candidate):
     location_match = int(user.ideal_profile["preferred_location"] in ["any", candidate.location]) and int(candidate.ideal_profile["preferred_location"] in ["any", user.location])
 
     # 性格匹配（双向余弦相似度）
-    p1 = np.array(user.personality).reshape(1, -1)
-    p2 = np.array(candidate.ideal_profile["preferred_personality"]).reshape(1, -1)
-    sim1 = cosine_similarity(p1, p2)[0][0]
-
-    p3 = np.array(candidate.personality).reshape(1, -1)
-    p4 = np.array(user.ideal_profile["preferred_personality"]).reshape(1, -1)
-    sim2 = cosine_similarity(p3, p4)[0][0]
-
-    personality_score = (sim1 + sim2) / 2
+    personality_score = match_personality(user, candidate)
 
     interest_score = match_interest_set(user.interests, candidate.interests)
 

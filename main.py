@@ -112,7 +112,7 @@ def input_user():
         input("按任意键开始匹配...")
         return user
 
-
+    # 手动输入
     print("\n请输入你的个人信息：")
     name = input("名字：")
     age = int(input("年龄："))
@@ -122,8 +122,32 @@ def input_user():
     salary = int(input("薪资（整数）："))
     language = input("母语：")
     interests = input("兴趣（如 travel,music）：").split(",")
-    personality = list(map(int, input("性格维度打分（如 4 3 5 2 1）：").split()))
 
+    # 用户性格输入
+    print("\n请为你的 Big Five 性格维度打分（每项 1～5 分，分数越高代表该特质越强）：")
+    print("维度顺序如下：")
+    print("  O：开放性（Openness）")
+    print("  C：尽责性（Conscientiousness）")
+    print("  E：外向性（Extraversion）")
+    print("  A：宜人性（Agreeableness）")
+    print("  N：神经质（Neuroticism）")
+    print("例如输入：4 3 5 2 1")
+    while True:
+        raw = input("请输入五个数字，以空格分隔：").strip()
+        parts = raw.split()
+        if len(parts) != 5:
+            print("❌ 必须输入 5 个数字，请重试。")
+            continue
+        try:
+            personality = list(map(int, parts))
+            if all(1 <= val <= 5 for val in personality):
+                break
+            else:
+                print("❌ 每个分数必须在 1 到 5 之间。")
+        except ValueError:
+            print("❌ 输入必须为整数。")
+
+    # 理想对象要求
     print("\n请输入你对理想对象的要求：")
     preferred_gender = input("理想性别（male/female/any）：")
     preferred_location = input("理想地区（或 any）：")
@@ -132,7 +156,22 @@ def input_user():
     preferred_language = input("理想语言（或 any）：")
     preferred_height_range = list(map(int, input("理想身高范围（如 155 175）：").split()))
     preferred_interests = input("理想兴趣（如 music,reading）：").split(",")
-    preferred_personality = list(map(int, input("理想性格（如 4 3 5 2 1）：").split()))
+
+    print("\n请为理想对象的 Big Five 性格维度打分（顺序与上方一致，1～5 分）：")
+    while True:
+        raw = input("请输入五个数字，以空格分隔：").strip()
+        parts = raw.split()
+        if len(parts) != 5:
+            print("❌ 必须输入 5 个数字，请重试。")
+            continue
+        try:
+            preferred_personality = list(map(int, parts))
+            if all(1 <= val <= 5 for val in preferred_personality):
+                break
+            else:
+                print("❌ 每个分数必须在 1 到 5 之间。")
+        except ValueError:
+            print("❌ 输入必须为整数。")
 
     required_fields = {}
     for field in ["gender", "location", "age", "salary", "language", "height"]:
@@ -147,6 +186,7 @@ def input_user():
         preferred_interests, preferred_personality, preferred_height_range,
         required_fields=required_fields
     )
+
 
 def run_matching():
     me = input_user()

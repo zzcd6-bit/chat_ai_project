@@ -11,11 +11,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# 加载/初始化兴趣模型
-MODEL_PATH = "interest_model.pkl"
+# 🟩 获取当前脚本所在目录
+BASE_DIR = os.path.dirname(__file__)
+JSON_PATH = os.path.join(BASE_DIR, "interest_model", "interest_pairs.json")
+MODEL_PATH = os.path.join(BASE_DIR, "interest_model.pkl")
 CLASSES = [0, 1]  # 0: 不相关，1: 相关
 
-# 语义模型 & 缓存
+# 加载语义模型
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 embedding_cache = {}
 
@@ -24,10 +26,13 @@ def get_embedding(text):
         embedding_cache[text] = embedding_model.encode(text)
     return embedding_cache[text]
 
-# 加载兴趣对样本
-with open("interest_pairs.json", "r", encoding="utf-8") as f:
+# 🟩 加载兴趣对数据
+if not os.path.exists(JSON_PATH):
+    raise FileNotFoundError(f"❌ 找不到数据文件：{JSON_PATH}")
+with open(JSON_PATH, "r", encoding="utf-8") as f:
     pairs = json.load(f)
 
+# 构造样本
 X, y = [], []
 for w1, w2, label in pairs:
     v1 = get_embedding(w1)
@@ -35,47 +40,41 @@ for w1, w2, label in pairs:
     combined = np.concatenate([v1, v2])
     X.append(combined)
     y.append(label)
-
 X, y = np.array(X), np.array(y)
 
-# 如果已有模型，就加载继续训练；否则新建
+# 🟩 初始化/加载模型
 if os.path.exists(MODEL_PATH):
     clf = joblib.load(MODEL_PATH)
-    print("The old model has been loaded, ready for incremental training.")
+    print("✅ 已加载旧模型，开始增量训练...")
 else:
     clf = SGDClassifier(loss="log_loss", max_iter=1000)
-    clf.partial_fit(X[:1], y[:1], classes=CLASSES)  # 初始化类别
+    clf.partial_fit(X[:1], y[:1], classes=CLASSES)
+    print("🆕 已初始化新模型...")
 
-# 增量训练（支持任意小批数据）
 clf.partial_fit(X, y)
 
-# 保存
+# 保存模型
 joblib.dump(clf, MODEL_PATH)
-print("Incremental training is complete, the model has been saved to interest_model.pkl.")
+print(f"✅ 模型已保存至 {MODEL_PATH}")
 
-# 模型评估（只对训练集）
+# 模型评估（仅训练集）
 y_pred = clf.predict(X)
-
 acc = accuracy_score(y, y_pred)
 prec = precision_score(y, y_pred)
 rec = recall_score(y, y_pred)
 f1 = f1_score(y, y_pred)
 
-print("\nThe result of the model evaluation is：")
-print(f"Accuracy: {acc:.4f}")
+print("\n📊 模型训练结果：")
+print(f"Accuracy:  {acc:.4f}")
 print(f"Precision: {prec:.4f}")
-print(f"Recall: {rec:.4f}")
-print(f"F1 Score: {f1:.4f}")
+print(f"Recall:    {rec:.4f}")
+print(f"F1 Score:  {f1:.4f}")
 
-# 可视化混淆矩阵
+# 混淆矩阵可视化
 cm = confusion_matrix(y, y_pred)
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
 plt.title("Confusion Matrix")
+plt.tight_layout()
 plt.show()
-
-
-
-
-
