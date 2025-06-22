@@ -1,7 +1,6 @@
-# vectorizer.py
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-# === 向量模型 + 小模型：只加载一次 ===
+# === Vector Model + Lightweight Model: Load only once ===
 from sentence_transformers import SentenceTransformer
 import joblib
 import os
@@ -12,7 +11,6 @@ embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "interest_model.pkl")
 interest_clf = joblib.load(MODEL_PATH)
 
-
 embedding_cache = {}
 
 def get_embedding(text):
@@ -20,7 +18,7 @@ def get_embedding(text):
         embedding_cache[text] = embedding_model.encode(text)
     return embedding_cache[text]
 
-#兴趣匹配
+# Interest similarity matching
 def match_interest_set(set1, set2):
     matched = 0
     total = max(1, len(set(set1) | set(set2)))
@@ -36,7 +34,7 @@ def match_interest_set(set1, set2):
     return matched / total
 
 def build_feature_vector(user, candidate):
-    # 数值型匹配：互相是否落在对方的理想范围内
+    # Numerical attribute matching: whether both fall within each other's preferred range
     age_match_u2c = int(candidate.ideal_profile["preferred_age_range"][0] <= user.age <= candidate.ideal_profile["preferred_age_range"][1])
     age_match_c2u = int(user.ideal_profile["preferred_age_range"][0] <= candidate.age <= user.ideal_profile["preferred_age_range"][1])
     age_match = (age_match_u2c + age_match_c2u) / 2
@@ -49,14 +47,15 @@ def build_feature_vector(user, candidate):
     salary_match_c2u = int(user.ideal_profile["preferred_salary_range"][0] <= candidate.salary <= user.ideal_profile["preferred_salary_range"][1])
     salary_match = (salary_match_u2c + salary_match_c2u) / 2
 
-    # 类别型匹配（双向）
+    # Categorical attribute matching (bidirectional)
     lang_match = int(user.language == candidate.language)
     gender_match = int(user.ideal_profile["preferred_gender"] in ["any", candidate.gender]) and int(candidate.ideal_profile["preferred_gender"] in ["any", user.gender])
     location_match = int(user.ideal_profile["preferred_location"] in ["any", candidate.location]) and int(candidate.ideal_profile["preferred_location"] in ["any", user.location])
 
-    # 性格匹配（双向余弦相似度）
+    # Personality matching (bidirectional cosine similarity)
     personality_score = match_personality(user, candidate)
 
+    # Interest matching using semantic classifier
     interest_score = match_interest_set(user.interests, candidate.interests)
 
     return [

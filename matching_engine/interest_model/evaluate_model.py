@@ -1,4 +1,3 @@
-# evaluate_model.py
 import json
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
@@ -8,11 +7,11 @@ from sentence_transformers import SentenceTransformer
 import joblib
 import os
 
-# 加载模型
+# Load trained model
 clf = joblib.load("interest_model.pkl")
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# 加载数据
+# Load evaluation data
 with open("interest_pairs.json", "r", encoding="utf-8") as f:
     pairs = json.load(f)
 
@@ -31,18 +30,16 @@ prec = precision_score(y, y_pred)
 rec = recall_score(y, y_pred)
 f1 = f1_score(y, y_pred)
 
-print("Model Evaluation：")
+print("Model Evaluation:")
 print(f"Accuracy: {acc:.4f}")
 print(f"Precision: {prec:.4f}")
 print(f"Recall: {rec:.4f}")
 print(f"F1 Score: {f1:.4f}")
 
-# 混淆矩阵
+# Confusion Matrix
 cm = confusion_matrix(y, y_pred)
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
 plt.xlabel("Predicted")
 plt.ylabel("Actual")
 plt.title("Confusion Matrix")
 plt.show()
-
-

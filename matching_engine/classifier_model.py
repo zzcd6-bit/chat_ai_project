@@ -4,21 +4,21 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor  
 from matching_engine.vectorizer import build_feature_vector
 
-# 模型保存路径
+# Path to save the model
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "match_model.pkl")
 
 def train_model(X, y):
-    """训练回归模型并保存"""
+    """Train the regression model and save it"""
     reg = RandomForestRegressor(n_estimators=100, random_state=42)
     reg.fit(X, y)
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(reg, f)
-    print("[✔] 模型已保存至", MODEL_PATH)
+    print("[✔] Model saved to", MODEL_PATH)
 
 def predict_match_bidirectional(user, candidate):
-    """双向预测匹配度（百分比形式）"""
+    """Bidirectional prediction of match score (as percentage)"""
     if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError("未找到模型，请先运行 train_classifier.py")
+        raise FileNotFoundError("Model not found. Please run train_classifier.py first.")
 
     with open(MODEL_PATH, "rb") as f:
         reg = pickle.load(f)
@@ -31,13 +31,13 @@ def predict_match_bidirectional(user, candidate):
     X2 = build_feature_vector(candidate, user)
     score2 = reg.predict([X2])[0]
 
-    # 平均匹配度（限制在 0~1）
+    # Average score (clipped between 0 and 1)
     avg_score = max(0.0, min((score1 + score2) / 2, 1.0))
-    return round(avg_score * 100, 2)  # 转换为百分比
+    return round(avg_score * 100, 2)  # Convert to percentage
 
 def load_trained_model():
-    """加载训练好的回归模型"""
+    """Load the trained regression model"""
     if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError("未找到模型文件，请先训练模型。")
+        raise FileNotFoundError("Model file not found. Please train the model first.")
     with open(MODEL_PATH, "rb") as f:
         return pickle.load(f)

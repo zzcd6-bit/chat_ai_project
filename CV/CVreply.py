@@ -1,12 +1,10 @@
-# reply_engine/cvReply.py
-
 import random
-from typing import List  # ✅ 添加这一行
+from typing import List  # ✅ Added this line
 
-# 定义人类相关关键词（根据YOLO模型返回的类别名称）
+# Define keywords related to humans (based on YOLO model labels)
 HUMAN_KEYWORDS = {"person"}
 
-# 可配置的夸“人”的语句
+# Configurable compliments for human-related images
 HUMAN_REPLIES = [
     "You're stunning!",
     "Looking great!",
@@ -18,7 +16,7 @@ HUMAN_REPLIES = [
     "Such a stylish look! Loove that"
 ]
 
-# 可配置的夸“物体/风景/非人类”的语句
+# Configurable compliments for objects/scenery/non-human subjects
 OBJECT_REPLIES = [
     "That's awesome!",
     "Nice scene!",
@@ -31,11 +29,11 @@ OBJECT_REPLIES = [
     ""
 ]
 
-def generate_cv_replies(detected_types: List[str], n: int = 5) -> List[str]:  # ✅ 替换 list[str]
+def generate_cv_replies(detected_types: List[str], n: int = 5) -> List[str]:  # ✅ Replaced list[str]
     """
-    根据图像识别类型返回 n 条风格多样的 CV 自动回复
-    - 如果有人类（"person"），返回人类回复
-    - 否则返回带主语（检测类型）的物体回复变体
+    Generate n diverse CV-based auto-replies based on detected object types
+    - If humans are detected ("person"), return human compliments
+    - Otherwise, generate replies based on object types with subject phrases
     """
     lower_types = [t.lower() for t in detected_types]
 
@@ -43,12 +41,12 @@ def generate_cv_replies(detected_types: List[str], n: int = 5) -> List[str]:  # 
         pool = HUMAN_REPLIES
         return random.sample(pool, min(n, len(pool)))
 
-    # 非人类情况处理：
-    # 1. 随机基础回复
+    # Handle non-human case:
+    # 1. Random base replies
     pool = [s for s in OBJECT_REPLIES if s.strip()]
     base_replies = random.sample(pool, min(n // 2, len(pool)))
 
-    # 2. 每个物体生成主语句式（取最多 n 条）
+    # 2. Generate subject-based replies for each object (up to n lines)
     subject_replies = []
     templates = [
         "The {obj} looks great!",
@@ -58,13 +56,13 @@ def generate_cv_replies(detected_types: List[str], n: int = 5) -> List[str]:  # 
         "Such a nice {obj}!"
     ]
     for obj in lower_types:
-        for t in random.sample(templates, k=1):  # 每个物体一句
+        for t in random.sample(templates, k=1):  # One reply per object
             subject_replies.append(t.format(obj=obj))
             if len(subject_replies) >= n:
                 break
         if len(subject_replies) >= n:
             break
 
-    # 3. 合并两种风格回复并截断到 n 条
+    # 3. Combine both styles of replies and truncate to n responses
     all_replies = base_replies + subject_replies
     return all_replies[:n]

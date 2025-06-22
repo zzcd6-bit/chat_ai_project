@@ -1,9 +1,8 @@
-# matcher.py
 from matching_engine.classifier_model import predict_match_bidirectional
 
 def hard_filter(user, candidate):
     """
-    根据用户设定的 required_fields 进行软硬筛选
+    Perform hard filtering based on user's required_fields settings
     """
     ideal = user.ideal_profile
     required = user.required_fields
@@ -36,7 +35,7 @@ def hard_filter(user, candidate):
 
 def match_user(user, candidates):
     """
-    返回按 AI 预测匹配度排序的候选人列表（包含 User 对象）
+    Return a list of candidates sorted by AI-predicted match score (includes User objects)
     """
     results = []
     for candidate in candidates:
@@ -46,10 +45,9 @@ def match_user(user, candidates):
             continue
         try:
             score = predict_match_bidirectional(user, candidate)
-            results.append((candidate, score))  # ✅ 返回 User 对象
+            results.append((candidate, score))  # ✅ Return User object
         except Exception as e:
-            print(f"匹配 {candidate.name} 时出错：{e}")
+            print(f"Error matching {candidate.name}: {e}")
 
     results.sort(key=lambda x: x[1], reverse=True)
     return results
-
