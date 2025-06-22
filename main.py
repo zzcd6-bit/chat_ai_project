@@ -85,9 +85,12 @@ def input_user():
             }
         )
 
+        # 添加默认权重（全为 1.0）
+        user.ideal_profile["trait_weights"] = {'O': 1.0, 'C': 1.0, 'E': 1.0, 'A': 1.0, 'N': 1.0}
+
         clear()
         print("✅ 使用测试数据成功，当前用户信息如下：")
-        print("────────────────────")
+        print("──────────────────────────")
         print("【基本信息】")
         print(f"姓名：{user.name}")
         print(f"年龄：{user.age}")
@@ -98,7 +101,7 @@ def input_user():
         print(f"语言：{user.language}")
         print(f"兴趣：{', '.join(user.interests)}")
         print(f"性格：{user.personality}")
-        print("────────────────────")
+        print("──────────────────────────")
         print("【理想伴侣偏好】")
         print(f"性别偏好：{user.ideal_profile['preferred_gender']}")
         print(f"地区偏好：{user.ideal_profile['preferred_location']}")
@@ -108,11 +111,12 @@ def input_user():
         print(f"兴趣偏好：{', '.join(user.ideal_profile['preferred_interests'])}")
         print(f"性格偏好：{user.ideal_profile['preferred_personality']}")
         print(f"身高范围偏好：{user.ideal_profile['preferred_height_range'][0]} - {user.ideal_profile['preferred_height_range'][1]} cm")
-        print("────────────────────")
+        print(f"性格权重：{user.ideal_profile['trait_weights']}")
+        print("──────────────────────────")
         input("按任意键开始匹配...")
         return user
 
-    # 手动输入
+    # 手动输入用户数据
     print("\n请输入你的个人信息：")
     name = input("名字：")
     age = int(input("年龄："))
@@ -123,31 +127,21 @@ def input_user():
     language = input("母语：")
     interests = input("兴趣（如 travel,music）：").split(",")
 
-    # 用户性格输入
-    print("\n请为你的 Big Five 性格维度打分（每项 1～5 分，分数越高代表该特质越强）：")
-    print("维度顺序如下：")
-    print("  O：开放性（Openness）")
-    print("  C：尽责性（Conscientiousness）")
-    print("  E：外向性（Extraversion）")
-    print("  A：宜人性（Agreeableness）")
-    print("  N：神经质（Neuroticism）")
-    print("例如输入：4 3 5 2 1")
+    print("\n请为你的 Big Five 性格维度打分（每项 1～5）：")
+    print("O：开放性，C：尽责性，E：外向性，A：宜人性，N：神经质")
     while True:
-        raw = input("请输入五个数字，以空格分隔：").strip()
-        parts = raw.split()
-        if len(parts) != 5:
-            print("❌ 必须输入 5 个数字，请重试。")
-            continue
+        raw = input("请输入五个数字（空格分隔）：").strip()
         try:
-            personality = list(map(int, parts))
-            if all(1 <= val <= 5 for val in personality):
+            personality = list(map(int, raw.split()))
+            if len(personality) == 5 and all(1 <= x <= 5 for x in personality):
                 break
-            else:
-                print("❌ 每个分数必须在 1 到 5 之间。")
-        except ValueError:
-            print("❌ 输入必须为整数。")
+        except:
+            pass
+        print("❌ 输入格式有误，请重新输入。")
 
-    # 理想对象要求
+    # 权重输入
+    
+
     print("\n请输入你对理想对象的要求：")
     preferred_gender = input("理想性别（male/female/any）：")
     preferred_location = input("理想地区（或 any）：")
@@ -157,28 +151,45 @@ def input_user():
     preferred_height_range = list(map(int, input("理想身高范围（如 155 175）：").split()))
     preferred_interests = input("理想兴趣（如 music,reading）：").split(",")
 
-    print("\n请为理想对象的 Big Five 性格维度打分（顺序与上方一致，1～5 分）：")
+    print("\n为理想对象的 Big Five 性格打分（1～5）：")
     while True:
-        raw = input("请输入五个数字，以空格分隔：").strip()
-        parts = raw.split()
-        if len(parts) != 5:
-            print("❌ 必须输入 5 个数字，请重试。")
-            continue
+        raw = input("请输入五个数字（空格分隔）：").strip()
         try:
-            preferred_personality = list(map(int, parts))
-            if all(1 <= val <= 5 for val in preferred_personality):
+            preferred_personality = list(map(int, raw.split()))
+            if len(preferred_personality) == 5 and all(1 <= x <= 5 for x in preferred_personality):
                 break
-            else:
-                print("❌ 每个分数必须在 1 到 5 之间。")
-        except ValueError:
-            print("❌ 输入必须为整数。")
+        except:
+            pass
+        print("❌ 输入格式有误，请重新输入。")
+    
+    trait_codes = ['O', 'C', 'E', 'A', 'N']
+    trait_names = {
+        'O': '开放性（Openness）',
+        'C': '尽责性（Conscientiousness）',
+        'E': '外向性（Extraversion）',
+        'A': '宜人性（Agreeableness）',
+        'N': '神经质（Neuroticism）'
+    }
+    trait_weights = {}
+    print("\n为理想对象的每个性格维度设置权重（如 0.0～1.0，越高越重要）：")
+    for t in trait_codes:
+        while True:
+            val = input(f"  权重 {t} - {trait_names[t]}：").strip()
+            try:
+                weight = float(val)
+                if 0 < weight <= 1.0:
+                    trait_weights[t] = weight
+                    break
+            except:
+                pass
+            print("❌ 请输入有效数字（范围为 0.0～1.0，不能为 0）。")
 
     required_fields = {}
     for field in ["gender", "location", "age", "salary", "language", "height"]:
         answer = input(f"{field} 是否必须满足？(yes/no)：").strip().lower()
         required_fields[field] = (answer == "yes")
 
-    return User(
+    user = User(
         name, age, gender, height, location, salary, language,
         interests, personality,
         preferred_gender, preferred_location, preferred_age_range,
@@ -186,6 +197,20 @@ def input_user():
         preferred_interests, preferred_personality, preferred_height_range,
         required_fields=required_fields
     )
+    user.ideal_profile["trait_weights"] = trait_weights
+    # 输出加权后性格向量
+    order = ['O', 'C', 'E', 'A', 'N']
+    weighted_vector = {
+        t: user.ideal_profile['preferred_personality'][i] * user.ideal_profile['trait_weights'][t]
+        for i, t in enumerate(order)
+    }
+
+    print("\n加权后的性格偏好向量：")
+    for t in order:
+        print(f"  {t}: {weighted_vector[t]:.2f}")
+
+    return user
+
 
 
 def run_matching():
